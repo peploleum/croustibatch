@@ -1,0 +1,16 @@
+version: '3'
+services:
+  croustibatch:
+    build:
+      context: ./raw/
+    #volumes:
+      #- ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    ports:
+      - "8092:80"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - insight
+networks:
+  insight:
+    external: true
