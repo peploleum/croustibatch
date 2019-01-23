@@ -55,6 +55,6 @@ try:
 finally:
     if alpr:
         print(" Unloading ")
-        # alpr.unload()
+        alpr.unload()
         print(" Unloaded ")
-        exit(1)
+        exit(0)
