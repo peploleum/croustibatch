@@ -6,7 +6,7 @@ services:
     #volumes:
       #- ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
     ports:
-      - "8092:80"
+      - "22:22"
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
