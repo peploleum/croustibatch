@@ -1,3 +1,4 @@
 pika
 docker
 ArgumentParser
+requests
