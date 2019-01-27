@@ -11,7 +11,7 @@ COPY sshd_config /etc/ssh/sshd_config
 COPY requirements.txt ./
 RUN mkdir /app
 COPY entrypoint.sh /app
-COPY dockerdist/*.py /app
+COPY dockerdist/*.py /app/
 RUN mkdir /app/runtime_data
 COPY dockerdist/runtime_data /app/runtime_data
 RUN mkdir /app/samples
