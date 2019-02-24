@@ -52,6 +52,7 @@ try:
                     prefix = "*"
 
                 print("  %s %12s%12f" % (prefix, candidate['plate'], candidate['confidence']))
+
 finally:
     if alpr:
         print(" Unloading ")
