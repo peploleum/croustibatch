@@ -6,11 +6,16 @@ services:
     ports:
     - "22:22"
     environment:
-      INSIGHT_HOST: locahost
+      INSIGHT_HOST: localhost
       INSIGHT_PORT: 8090
       CROUSTIBATCH_NAME: CROUSTIBATCH
+    # --endpoint = ip de insight
+    command:  bash -c 'python3 /app/crawler.py --source "/app/source" --typesource "json" --config "/app/conf/openalpr.conf" --runtime_data "/app/runtime_data" --endpoint "http://10.0.75.1:8080"'
     networks:
     - insight
+    volumes:
+    - ../download:/app/download
+    - ../source:/app/source
 networks:
   insight:
     external: true
