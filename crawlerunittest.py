@@ -30,7 +30,7 @@ class CrawlerTest(unittest.TestCase):
             os.rename(data, crawlDir + "/" + file.name)
 
     def test_date(self):
-        now = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M')
+        now = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
         print(now)
 
 
