@@ -2,6 +2,7 @@ import random
 import unittest
 import insight
 import pathlib
+import datetime
 from openalpr import Alpr
 import os
 
@@ -25,6 +26,8 @@ class CrawlerTest(unittest.TestCase):
             self.assertTrue(os.path.isfile(data))
             os.rename(data, crawlDir+"/"+file.name)
 
-
+    def test_date(self):
+        now = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M')
+        print(now)
 if __name__ == '__main__':
     unittest.main()
