@@ -23,7 +23,7 @@ parser.add_argument("--runtime_data", dest="runtime_data", action="store", defau
 
 parser.add_argument("--endpoint", dest="endpoint", help="Insight's endpoint", action="store", default="http://localhost:8080")
 
-parser.add_argument("--typesource", dest="dataSource", help="Source Image or JSON", action="store", default="json")
+parser.add_argument("--i", dest="dataSource", help="Source Image or JSON", action="store", default="json")
 
 parser.add_argument("--source", dest="directory", help="Directory source Image or JSON", action="store", default="source")
 
@@ -31,6 +31,8 @@ parser.add_argument("--store", dest="store", help="Directory store Image", actio
 
 parser.add_argument("--login", dest="login", help="Login", action="store", default="admin")
 parser.add_argument("--password", dest="password", help="Password", action="store", default="admin")
+
+parser.add_argument("--to", dest="timeout", help="Timeout in second", action="store", default="0")
 
 #--debug That will draw a square around the plate.?
 options = parser.parse_args()
@@ -43,6 +45,7 @@ try:
     lastCrawl = None
     jsonFiles = None
     alpr = None
+    start = time.time()
     print('croustibatch')
     alpr = Alpr(options.country, options.config, options.runtime_data)
     alpr.set_detect_region("d")
@@ -57,13 +60,13 @@ try:
         alpr.set_detect_region(True)
         if not os.path.isdir(options.directory):
             os.mkdir(options.directory)
-        if not os.path.isdir(options.directory):
+        if not os.path.isdir(options.store):
             os.mkdir(options.store)
         sourceDirectory = options.directory
         targetDirectory = options.store
 
-        if not os.path.exists(targetDirectory):
-            os.makedirs(targetDirectory)
+
+
         cwd = os.getcwd()
         if options.dataSource == "image":
             type = "*.jpg"
@@ -85,12 +88,20 @@ try:
                 elif options.dataSource == "image":
                     for file in jsonFiles:
                         print(file.name)
-                        strFileName = targetDirectory + "/" + file.name
-                        insight.postimg(strFileName, file.name.rsplit('.', 1)[0], file, insight.get_plates(alpr, strFileName), options.endpoint, options.login, options.password)
+                        strFileName = sourceDirectory + "/" + file.name
+                        targetImageFileName = crawlDir + "/processedData/" + file.name
+                        insight.postimg(strFileName, file.name.rsplit('.', 1)[0], insight.get_plates(alpr, strFileName), options.endpoint, options.login, options.password)
+                        if not os.path.isfile(targetImageFileName):
+                            os.rename(str(file), targetImageFileName)
                 else:
                     print("Wrong --typesource arg")
             else:
-                time.sleep(5)
+                if (int(options.timeout) != 0) & ((time.time()-start) < float(options.timeout)):
+                    time.sleep(5)
+                elif int(options.timeout) == 0:
+                    time.sleep(5)
+                else:
+                    break
 except Exception as e:
     print("ERROR : ", e)
 

@@ -9,7 +9,7 @@ class CrawlerTest(unittest.TestCase):
 
     def test_postimg(self):
         alpr = Alpr("eu", "conf/openalpr.conf", "runtime_data")
-        imageFileName = "samples/eu-3.jpg"
+        imageFileName = "samples_test/eu-3.jpg"
         jpeg_bytes = open(imageFileName, "rb").read()
         results = alpr.recognize_array(jpeg_bytes)
         post = insight.postimg(imageFileName, "1231231231231231231", results, "http://localhost:8080", "admin", "admin")
