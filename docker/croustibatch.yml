@@ -1,10 +1,11 @@
 version: '3'
 services:
   croustibatch:
-    build:
-      context: ./raw/
+    #build:
+    #  context: ./raw/
+    image: nicolasmir/docker_croustibatch_1:latest
     ports:
-    - "22:22"
+    - "2222:2222"
     environment:
       INSIGHT_HOST: localhost
       INSIGHT_PORT: 8090
