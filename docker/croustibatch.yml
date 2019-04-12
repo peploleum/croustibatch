@@ -10,7 +10,8 @@ services:
       INSIGHT_PORT: 8090
       CROUSTIBATCH_NAME: CROUSTIBATCH
     # --endpoint = ip de insight
-    command:  bash -c 'python3 /app/crawler.py --source "/app/source" --typesource "json" --config "/app/conf/openalpr.conf" --runtime_data "/app/runtime_data" --endpoint "http://10.0.75.1:8080"'
+    command:  bash -c 'python3.6 /app/crawler.py --source ${SOURCE} --i ${INPUT} --config ${CONFIG} --runtime_data ${RUNTIME} --endpoint ${ENDPOINT}'
+    #command: ["tail", "-f", "/dev/null"]
     networks:
     - insight
     volumes:
