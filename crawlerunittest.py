@@ -1,9 +1,12 @@
-import random
-import unittest
-import insight
-import pathlib
-from openalpr import Alpr
+import datetime
 import os
+import pathlib
+import unittest
+
+from openalpr import Alpr
+
+import insight
+
 
 class CrawlerTest(unittest.TestCase):
 
@@ -21,9 +24,14 @@ class CrawlerTest(unittest.TestCase):
         crawlDir = os.getcwd() + "/source_test"
         jsonFiles = pathlib.Path(crawlDir).glob("*.json")
         for file in jsonFiles:
-            data = insight.extract_data(crawlDir, file, "download_test", alpr,  "http://localhost:8080", "admin", "admin")
+            data = insight.extract_data(crawlDir, file, "download_test", alpr, "http://localhost:8080", "admin",
+                                        "admin")
             self.assertTrue(os.path.isfile(data))
-            os.rename(data, crawlDir+"/"+file.name)
+            os.rename(data, crawlDir + "/" + file.name)
+
+    def test_date(self):
+        now = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+        print(now)
 
 
 if __name__ == '__main__':
