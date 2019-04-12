@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import os.path
 import pathlib
-
+import logging
 import requests
 # pip install requests
 from openalpr import Alpr
@@ -14,6 +14,8 @@ parser = ArgumentParser(description='OpenALPR Python Test Program')
 
 parser.add_argument("-c", "--country", dest="country", action="store", default="eu",
                      help="License plate Country")
+
+parser.add_argument("-v", "--verbosity",action="store_true", help="show debug logs")
 
 parser.add_argument("--config", dest="config", action="store", default="conf/openalpr.conf",
                     help="Path to openalpr.conf config file")
@@ -46,14 +48,20 @@ try:
     jsonFiles = None
     alpr = None
     start = time.time()
-    print('croustibatch')
+
+    logging.basicConfig(level=logging.INFO)
+    if options.verbosity:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+
+    logging.info('Lancement de croustibatch')
     alpr = Alpr(options.country, options.config, options.runtime_data)
     alpr.set_detect_region("d")
 
     if not alpr.is_loaded():
-        print("Error loading OpenALPR")
+        logging.error("Error loading OpenALPR")
     else:
-        print("Using OpenALPR " + alpr.get_version())
+        logging.info("Using OpenALPR " + alpr.get_version())
 
         alpr.set_top_n(5)
         #alpr.set_default_region("wa")
@@ -82,19 +90,23 @@ try:
                 jsonFiles = pathlib.Path(crawlDir).glob(type)
                 if options.dataSource == "json":
                     for file in jsonFiles:
-                        print(file)
-                        insight.extract_data(crawlDir, file, targetDirectory, alpr, options.endpoint, options.login, options.password)
+                        logging.debug(file.name)
+                        if not str(file.name).startswith('.'):
+                            insight.extract_data(crawlDir, file, targetDirectory, alpr, options.endpoint, options.login, options.password)
+                        else:
+                            logging.debug("file temp : "+ file.name)
 
                 elif options.dataSource == "image":
                     for file in jsonFiles:
-                        print(file.name)
+                        logging.debug(file.name)
                         strFileName = sourceDirectory + "/" + file.name
                         targetImageFileName = crawlDir + "/processedData/" + file.name
-                        insight.postimg(strFileName, file.name.rsplit('.', 1)[0], insight.get_plates(alpr, strFileName), options.endpoint, options.login, options.password)
-                        if not os.path.isfile(targetImageFileName):
-                            os.rename(str(file), targetImageFileName)
+                        if not str(file).startswith('.'):
+                            insight.postimg(strFileName, file.name.rsplit('.', 1)[0], insight.get_plates(alpr, strFileName), options.endpoint, options.login, options.password)
+                            if not os.path.isfile(targetImageFileName):
+                                os.rename(str(file), targetImageFileName)
                 else:
-                    print("Wrong --typesource arg")
+                    logging.error("Wrong --typesource arg")
             else:
                 if (int(options.timeout) != 0) & ((time.time()-start) < float(options.timeout)):
                     time.sleep(5)
@@ -103,8 +115,8 @@ try:
                 else:
                     break
 except Exception as e:
-    print("ERROR : ", e)
+    logging.error("ERROR : ", e)
 
 finally:
-    print(" Out ")
+    logging.info(" Fin de croustibatch ")
     exit(0)

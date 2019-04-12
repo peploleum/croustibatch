@@ -12,7 +12,7 @@ class CrawlerTest(unittest.TestCase):
         imageFileName = "samples_test/eu-3.jpg"
         jpeg_bytes = open(imageFileName, "rb").read()
         results = alpr.recognize_array(jpeg_bytes)
-        post = insight.postimg(imageFileName, "1231231231231231231", results, "http://localhost:8080", "admin", "admin")
+        post = insight.postimg(imageFileName, "1231231231231231231", str(results['results']), "http://localhost:8080", "admin", "admin")
         open(imageFileName, "rb").close()
         self.assertTrue(post)
 

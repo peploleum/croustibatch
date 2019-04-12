@@ -10,6 +10,7 @@ import pathlib
 
 import requests
 # pip install requests
+# pip install Pillow
 from openalpr import Alpr
 import time
 import insight
@@ -100,3 +101,5 @@ except Exception as e:
 finally:
     print(" Out ")
     exit(0)
+
+
