@@ -7,6 +7,8 @@ import requests
 from openalpr import Alpr
 import time
 import insight
+from ftplib import FTP
+import re
 
 from argparse import ArgumentParser
 
@@ -36,12 +38,31 @@ parser.add_argument("--password", dest="password", help="Password", action="stor
 
 parser.add_argument("--to", dest="timeout", help="Timeout in second", action="store", default="0")
 
+parser.add_argument("--ftp", dest="ftphost", help="connect to host, default port", action="store", default="192.168.0.10")
+
+parser.add_argument("--loginftp", dest="loginftp", help="Login to ftp_host", action="store", default="nimir")
+parser.add_argument("--passwordftp", dest="passwordftp", help="Password for ftp_host", action="store", default="@soleil1")
+
 #--debug That will draw a square around the plate.?
 options = parser.parse_args()
 
 def isSourceDirectoryEmpty(path):
-    return len(os.listdir(path) ) == 1
+    #return len(os.listdir(path) ) == 1
+    filelist = []
+    ftp.retrlines('LIST',filelist.append)
+    return len(filelist ) == 1
 
+def directory_exists(dir):
+    filelist = []
+    ftp.retrlines('LIST',filelist.append)
+    for f in filelist:
+        if f.split()[-1] == dir and f.upper().startswith('D'):
+            return True
+    return False
+
+def crdir(dir):
+    if directory_exists(dir) is False: # (or negate, whatever you prefer for readability)
+        ftp.mkd(dir)
 
 try:
     lastCrawl = None
@@ -66,35 +87,53 @@ try:
         alpr.set_top_n(5)
         #alpr.set_default_region("wa")
         alpr.set_detect_region(True)
-        if not os.path.isdir(options.directory):
-            os.mkdir(options.directory)
+
+        ftp = FTP(options.ftphost)
+        ftp.login(options.loginftp, options.passwordftp)
+
+        #if not os.path.isdir(options.directory):
+        #    os.mkdir(options.directory)
+        ftp.cwd("dev/croustibatch/docker")
+        cwd = ftp.pwd()
+        crdir(options.directory)
         if not os.path.isdir(options.store):
             os.mkdir(options.store)
+
         sourceDirectory = options.directory
         targetDirectory = options.store
 
 
 
-        cwd = os.getcwd()
+        #cwd = os.getcwd()
+        cwd = ftp.pwd()
         if options.dataSource == "image":
-            type = "*.jpg"
+            type = ".*\.jpg$"
         else:
-            type = "*.json"
+            type = "^(?!\.).*\.json$"
         crawlDir = cwd + "/" + sourceDirectory
-        jsonFiles = pathlib.Path(crawlDir).glob(type)
-        if not os.path.isdir(crawlDir+"/processedData"):
-            os.makedirs(crawlDir+"/processedData")
+        #jsonFiles = pathlib.Path(crawlDir).glob(type)
+        #if not os.path.isdir(crawlDir+"/processedData"):
+        #    os.makedirs(crawlDir+"/processedData")
+        ftp.cwd(sourceDirectory)
+        crdir("processedData")
+
 
         while True:
             if not isSourceDirectoryEmpty(crawlDir):
-                jsonFiles = pathlib.Path(crawlDir).glob(type)
+                #jsonFiles = pathlib.Path(crawlDir).glob(type)
+                filelist = []
+                ftp.retrlines('LIST',filelist.append)
+                filelistsplitted = [i.split()[-1] for i in filelist]
+                r = re.compile(type)
+                jsonFiles = list(filter(r.match, filelistsplitted))
                 if options.dataSource == "json":
                     for file in jsonFiles:
-                        logging.debug(file.name)
-                        if not str(file.name).startswith('.'):
-                            insight.extract_data(crawlDir, file, targetDirectory, alpr, options.endpoint, options.login, options.password)
-                        else:
-                            logging.debug("file temp : "+ file.name)
+                        #logging.debug(file.name)
+                        logging.debug(file)
+                        #if not str(file).startswith('.'):
+                        insight.extract_data(crawlDir, file, ftp,  targetDirectory, alpr, options.endpoint, options.login, options.password)
+                        #else:
+                        #    logging.debug("file temp : "+ file.name)
 
                 elif options.dataSource == "image":
                     for file in jsonFiles:

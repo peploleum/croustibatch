@@ -2,7 +2,9 @@
 
 import json
 import os.path
+from ftplib import FTP
 from pprint import pprint
+from io import StringIO
 
 import base64
 import logging
@@ -18,9 +20,23 @@ import os.path
 
 import requests
 # pip install requests
+from io import BytesIO
+
 from openalpr import Alpr
 import time
 import insight
+
+def file_exists(file, ftp):
+    filelist = []
+    ftp.retrlines('LIST',filelist.append)
+    for f in filelist:
+        if f.split()[-1] == file and f.upper().startswith('-'):
+            return True
+    return False
+
+def crdir(dir, ftp):
+    if file_exists(dir) is False: # (or negate, whatever you prefer for readability)
+        ftp.mkd(dir)
 
 def postimg(imagefilename, dataid, results, endpoint, login, password):
 
@@ -66,7 +82,8 @@ def postimg(imagefilename, dataid, results, endpoint, login, password):
                     "rawDataType": "image",
                     "rawDataContent": results,
                     "rawDataDataContentType": "image/jpeg",
-                    "rawDataData": str(decode)
+                    "rawDataData": str(decode),
+                    "rawDataCreationDate": time.time()
                 }
 
                 urlGet = url+"/filter?page=0&query="+dataid+"&size=20&filter=&sort=rawDataCreationDate,desc&sort=id"
@@ -78,6 +95,7 @@ def postimg(imagefilename, dataid, results, endpoint, login, password):
 
                         if basic_post_response.ok:
                             print("")
+                            os.remove(imagefilename)
                         else:
                             # If response code is not ok (200), print the resulting http error code with description
                             basic_post_response.raise_for_status()
@@ -93,6 +111,7 @@ def postimg(imagefilename, dataid, results, endpoint, login, password):
                         basic_put_response = session.put(url=url, json=rawData, headers=headersRawData)
                         if basic_put_response.ok:
                             print("")
+                            os.remove(imagefilename)
                         else:
                             basic_put_response.raise_for_status()
 
@@ -130,25 +149,38 @@ def get_media_url(imageFileName, media):
                 handle.write(block)
 
 
-def extract_data(crawlDir, file, targetDirectory, required, endpoint, login, password):
-    with open(str(file), encoding="utf8") as f:
-        data = json.load(f)
-    targetImageFileName = crawlDir + "/processedData/" + file.name
-    if not os.path.isdir(crawlDir+"/processedData/"):
-        os.mkdir(crawlDir+"/processedData/")
+def extract_data(crawlDir, file, ftp, targetDirectory, required, endpoint, login, password):
+    #with open(str(file), encoding="utf8") as f:
+    #    data = json.load(f)
+    d = BytesIO()
+    ftp.retrbinary('RETR '+file, d.write)
+    print ((d.getvalue().decode("utf-8")))
+    data = json.loads(d.getvalue().decode("utf-8"))
+    #targetImageFileName = crawlDir + "/processedData/" + file.name
+    targetImageFileName = crawlDir + "/processedData/" + file
+    #if not os.path.isdir(crawlDir+"/processedData/"):
+    #    os.mkdir(crawlDir+"/processedData/")
     if 'entities' not in data:
         logging.debug('The json is invalid')
-        if not os.path.isfile(targetImageFileName):
-            os.rename(str(file), targetImageFileName)
+        #if not os.path.isfile(targetImageFileName):
+        #    os.rename(str(file), targetImageFileName)
+        #else:
+        #    os.remove(str(file))
+        if not file_exists(targetImageFileName, ftp):
+            ftp.rename(file, targetImageFileName)
         else:
-            os.remove(str(file))
+            ftp.delete(file)
     else:
         if 'media' not in data['entities']:
             logging.debug("There is no media")
-            if not os.path.isfile(targetImageFileName):
-                os.rename(str(file), targetImageFileName)
+            #if not os.path.isfile(targetImageFileName):
+            #    os.rename(str(file), targetImageFileName) #todo: force override
+            #else:
+            #    os.remove(str(file))
+            if not file_exists(targetImageFileName, ftp):
+                ftp.rename(file, targetImageFileName)
             else:
-                os.remove(str(file))
+                ftp.delete(file)
         else:
             for media in data['entities']['media']:
                 logging.debug(media['media_url'])
@@ -161,10 +193,14 @@ def extract_data(crawlDir, file, targetDirectory, required, endpoint, login, pas
                     get_media_url(imageFileName, media)
 
                     # si le fichier json existe deja dans le dossier "processedData", on le supprime, si non on le déplace
-                    if not os.path.isfile(targetImageFileName):
-                        os.rename(str(file), targetImageFileName)
+                    #if not os.path.isfile(targetImageFileName):
+                    #    os.rename(str(file), targetImageFileName)
+                    #else:
+                    #    os.remove(str(file))
+                    if not file_exists(targetImageFileName, ftp):
+                        ftp.rename(file, targetImageFileName)
                     else:
-                        os.remove(str(file))
+                        ftp.delete(file)
 
                     # required: arguments requis pour extraire un résultat (alpr ou tesseract)-> dataContent à push dans insight
                     if not isinstance(required, str):
