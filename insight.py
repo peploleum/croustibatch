@@ -2,9 +2,6 @@
 
 import json
 import os.path
-from ftplib import FTP
-from pprint import pprint
-from io import StringIO
 
 import base64
 import logging
@@ -22,7 +19,6 @@ import requests
 # pip install requests
 from io import BytesIO
 
-from openalpr import Alpr
 import time
 import insight
 
@@ -95,10 +91,11 @@ def postimg(imagefilename, dataid, results, endpoint, login, password):
 
                         if basic_post_response.ok:
                             print("")
-                            os.remove(imagefilename)
+                            # os.remove(imagefilename)
                         else:
                             # If response code is not ok (200), print the resulting http error code with description
                             basic_post_response.raise_for_status()
+                        return basic_post_response.ok
                     else:
                         rawData = {
                             "id":j_data[0].get("id"),
@@ -111,18 +108,19 @@ def postimg(imagefilename, dataid, results, endpoint, login, password):
                         basic_put_response = session.put(url=url, json=rawData, headers=headersRawData)
                         if basic_put_response.ok:
                             print("")
-                            os.remove(imagefilename)
+                             #os.remove(imagefilename)
                         else:
                             basic_put_response.raise_for_status()
-
+                        return basic_put_response.ok
                 else:
                     # If response code is not ok (200), print the resulting http error code with description
                     basic_get_response.raise_for_status()
+                return basic_get_response.ok
             else:
                 logging.error("Auth failed")
         else:
             # For successful API call, response code will be 200 (OK)
-            if myResponse.ok:
+            if myResponse:
                 # j_data = json.loads(myResponse.content)
                 # print("The response contains {0} properties".format(len(j_data)))
                 print("")
@@ -130,7 +128,7 @@ def postimg(imagefilename, dataid, results, endpoint, login, password):
                 # If response code is not ok (200), print the resulting http error code with description
                 myResponse.raise_for_status()
 
-    return True
+    return myResponse.ok
 
 def get_media_url(imageFileName, media):
     logging.debug("getting media url...")
@@ -204,9 +202,11 @@ def extract_data(crawlDir, file, ftp, targetDirectory, required, endpoint, login
 
                     # required: arguments requis pour extraire un résultat (alpr ou tesseract)-> dataContent à push dans insight
                     if not isinstance(required, str):
-                        insight.postimg(imageFileName, str(data['id']), get_plates(required, imageFileName), endpoint, login, password)
+                        if insight.postimg(imageFileName, str(data['id']), get_plates(required, imageFileName), endpoint, login, password):
+                            os.remove(imageFileName)
                     else:
-                        insight.postimg(imageFileName, str(data['id']), get_text(imageFileName, required), endpoint, login, password)
+                        if insight.postimg(imageFileName, str(data['id']), get_text(imageFileName, required), endpoint, login, password):
+                            os.remove(imageFileName)
 
     return targetImageFileName
 

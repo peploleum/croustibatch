@@ -1,14 +1,13 @@
 # -*- coding: UTF-8 -*-
-import os.path
-import pathlib
+
 import logging
-import requests
 # pip install requests
 from openalpr import Alpr
 import time
 import insight
 from ftplib import FTP
 import re
+import os
 
 from argparse import ArgumentParser
 
@@ -39,6 +38,8 @@ parser.add_argument("--password", dest="password", help="Password", action="stor
 parser.add_argument("--to", dest="timeout", help="Timeout in second", action="store", default="0")
 
 parser.add_argument("--ftp", dest="ftphost", help="connect to host, default port", action="store", default="192.168.0.10")
+
+parser.add_argument("--pathtosource", dest="pathtosource", help="Path to directory source Image or JSON", action="store", default="dev/croustibatch/docker")
 
 parser.add_argument("--loginftp", dest="loginftp", help="Login to ftp_host", action="store", default="nimir")
 parser.add_argument("--passwordftp", dest="passwordftp", help="Password for ftp_host", action="store", default="@soleil1")
@@ -93,7 +94,7 @@ try:
 
         #if not os.path.isdir(options.directory):
         #    os.mkdir(options.directory)
-        ftp.cwd("dev/croustibatch/docker")
+        ftp.cwd(options.pathtosource)
         cwd = ftp.pwd()
         crdir(options.directory)
         if not os.path.isdir(options.store):
