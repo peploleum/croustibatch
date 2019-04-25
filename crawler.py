@@ -44,6 +44,11 @@ parser.add_argument("--pathtosource", dest="pathtosource", help="Path to directo
 parser.add_argument("--loginftp", dest="loginftp", help="Login to ftp_host", action="store", default="nimir")
 parser.add_argument("--passwordftp", dest="passwordftp", help="Password for ftp_host", action="store", default="@soleil1")
 
+parser.add_argument("-p", "--preprocess",dest="preprocess", type=str, default="thresh",
+                    help="type of preprocessing to be done")
+
+parser.add_argument("-t", "--tesseract",action="store_true", help="active tesseract")
+
 #--debug That will draw a square around the plate.?
 options = parser.parse_args()
 
@@ -68,94 +73,97 @@ def crdir(dir):
 try:
     lastCrawl = None
     jsonFiles = None
-    alpr = None
+
     start = time.time()
+
 
     logging.basicConfig(level=logging.INFO)
     if options.verbosity:
         logging.getLogger().setLevel(logging.DEBUG)
-
-
     logging.info('Lancement de croustibatch')
-    alpr = Alpr(options.country, options.config, options.runtime_data)
-    alpr.set_detect_region("d")
 
-    if not alpr.is_loaded():
-        logging.error("Error loading OpenALPR")
+    if not options.tesseract:
+        algo = Alpr(options.country, options.config, options.runtime_data)
+        algo.set_detect_region("d")
+        algo.set_top_n(5)
+        algo.set_detect_region(True)
+        logging.info("Using OpenALPR " + algo.get_version())
     else:
-        logging.info("Using OpenALPR " + alpr.get_version())
+        algo = "thresh"
 
-        alpr.set_top_n(5)
-        #alpr.set_default_region("wa")
-        alpr.set_detect_region(True)
+    # if not algo.is_loaded():
+    #     logging.error("Error loading OpenALPR")
+    # else:
 
-        ftp = FTP(options.ftphost)
-        ftp.login(options.loginftp, options.passwordftp)
+    ftp = FTP(options.ftphost)
+    ftp.login(options.loginftp, options.passwordftp)
 
-        #if not os.path.isdir(options.directory):
-        #    os.mkdir(options.directory)
-        ftp.cwd(options.pathtosource)
-        cwd = ftp.pwd()
-        crdir(options.directory)
-        if not os.path.isdir(options.store):
-            os.mkdir(options.store)
+    #if not os.path.isdir(options.directory):
+    #    os.mkdir(options.directory)
+    ftp.cwd(options.pathtosource)
+    cwd = ftp.pwd()
+    crdir(options.directory)
+    if not os.path.isdir(options.store):
+        os.mkdir(options.store)
 
-        sourceDirectory = options.directory
-        targetDirectory = options.store
-
-
-
-        #cwd = os.getcwd()
-        cwd = ftp.pwd()
-        if options.dataSource == "image":
-            type = ".*\.jpg$"
-        else:
-            type = "^(?!\.).*\.json$"
-        crawlDir = cwd + "/" + sourceDirectory
-        #jsonFiles = pathlib.Path(crawlDir).glob(type)
-        #if not os.path.isdir(crawlDir+"/processedData"):
-        #    os.makedirs(crawlDir+"/processedData")
-        ftp.cwd(sourceDirectory)
-        crdir("processedData")
+    sourceDirectory = options.directory
+    targetDirectory = options.store
 
 
-        while True:
-            if not isSourceDirectoryEmpty(crawlDir):
-                #jsonFiles = pathlib.Path(crawlDir).glob(type)
-                filelist = []
-                ftp.retrlines('LIST',filelist.append)
-                filelistsplitted = [i.split()[-1] for i in filelist]
-                r = re.compile(type)
-                jsonFiles = list(filter(r.match, filelistsplitted))
-                if options.dataSource == "json":
-                    for file in jsonFiles:
-                        #logging.debug(file.name)
-                        logging.debug(file)
-                        #if not str(file).startswith('.'):
-                        insight.extract_data(crawlDir, file, ftp,  targetDirectory, alpr, options.endpoint, options.login, options.password)
-                        #else:
-                        #    logging.debug("file temp : "+ file.name)
 
-                elif options.dataSource == "image":
-                    for file in jsonFiles:
-                        logging.debug(file.name)
-                        strFileName = sourceDirectory + "/" + file.name
-                        targetImageFileName = crawlDir + "/processedData/" + file.name
-                        if not str(file).startswith('.'):
-                            insight.postimg(strFileName, file.name.rsplit('.', 1)[0], insight.get_plates(alpr, strFileName), options.endpoint, options.login, options.password)
-                            if not os.path.isfile(targetImageFileName):
-                                os.rename(str(file), targetImageFileName)
-                else:
-                    logging.error("Wrong --typesource arg")
+    #cwd = os.getcwd()
+    cwd = ftp.pwd()
+    if options.dataSource == "image":
+        type = ".*\.jpg$"
+    else:
+        type = "^(?!\.).*\.json$"
+    crawlDir = cwd + "/" + sourceDirectory
+    #jsonFiles = pathlib.Path(crawlDir).glob(type)
+    #if not os.path.isdir(crawlDir+"/processedData"):
+    #    os.makedirs(crawlDir+"/processedData")
+    ftp.cwd(sourceDirectory)
+    crdir("processedData")
+
+
+    while True:
+        if not isSourceDirectoryEmpty(crawlDir):
+            #jsonFiles = pathlib.Path(crawlDir).glob(type)
+            filelist = []
+            ftp.retrlines('LIST',filelist.append)
+            filelistsplitted = [i.split()[-1] for i in filelist]
+            r = re.compile(type)
+            jsonFiles = list(filter(r.match, filelistsplitted))
+            if options.dataSource == "json":
+                for file in jsonFiles:
+                    #logging.debug(file.name)
+                    logging.debug(file)
+                    #if not str(file).startswith('.'):
+                    insight.extract_data(crawlDir, file, ftp,  targetDirectory, algo, options.endpoint, options.login, options.password)
+                    #else:
+                    #    logging.debug("file temp : "+ file.name)
+
+            elif options.dataSource == "image":
+                for file in jsonFiles:
+                    logging.debug(file.name)
+                    strFileName = sourceDirectory + "/" + file.name
+                    targetImageFileName = crawlDir + "/processedData/" + file.name
+                    if not str(file).startswith('.'):
+                        insight.postimg(strFileName, file.name.rsplit('.', 1)[0], insight.get_plates(algo, strFileName), options.endpoint, options.login, options.password)
+                        if not os.path.isfile(targetImageFileName):
+                            os.rename(str(file), targetImageFileName)
             else:
-                if (int(options.timeout) != 0) & ((time.time()-start) < float(options.timeout)):
-                    time.sleep(5)
-                elif int(options.timeout) == 0:
-                    time.sleep(5)
-                else:
-                    break
+                logging.error("Wrong --typesource arg")
+        else:
+            if (int(options.timeout) != 0) & ((time.time()-start) < float(options.timeout)):
+                time.sleep(5)
+            elif int(options.timeout) == 0:
+                time.sleep(5)
+            else:
+                break
 except Exception as e:
     logging.error("ERROR : ", e)
+
+
 
 finally:
     logging.info(" Fin de croustibatch ")

@@ -37,6 +37,8 @@ parser.add_argument("--to", dest="timeout", help="Timeout in second", action="st
 parser.add_argument("-p", "--preprocess",dest="preprocess", type=str, default="thresh",
                 help="type of preprocessing to be done")
 
+
+
 options = parser.parse_args()
 
 def isSourceDirectoryEmpty(path):
@@ -83,7 +85,7 @@ try:
                     print(file.name)
                     strFileName = sourceDirectory + "/" + file.name
                     targetImageFileName = crawlDir + "/processedData/" + file.name
-                    insight.postimg(strFileName, file.name.rsplit('.', 1)[0], insight.get_plates(alpr, strFileName), options.endpoint, options.login, options.password)
+                    insight.postimg(strFileName, file.name.rsplit('.', 1)[0], insight.get_text(strFileName, options.preprocess), options.endpoint, options.login, options.password)
                     if not os.path.isfile(targetImageFileName):
                         os.rename(str(file), targetImageFileName)
             else:
