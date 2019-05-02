@@ -67,6 +67,9 @@ def directory_exists(dir):
     return False
 
 def crdir(dir):
+    if len(dir.rsplit("/", 1))==2:
+        ftp.cwd(dir.rsplit("/", 1)[0])
+        dir = dir.rsplit("/", 1)[1]
     if directory_exists(dir) is False: # (or negate, whatever you prefer for readability)
         ftp.mkd(dir)
 
@@ -101,15 +104,14 @@ try:
     #if not os.path.isdir(options.directory):
     #    os.mkdir(options.directory)
     ftp.cwd(options.pathtosource)
+
     cwd = ftp.pwd()
-    crdir(options.directory)
+    crdir(str(options.directory))
     if not os.path.isdir(options.store):
         os.mkdir(options.store)
 
     sourceDirectory = options.directory
     targetDirectory = options.store
-
-
 
     #cwd = os.getcwd()
     cwd = ftp.pwd()

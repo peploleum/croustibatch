@@ -1,9 +1,9 @@
 version: '3'
 services:
   croustibatch:
-    #build:
-    #  context: ./raw/
-    image: nicolasmir/docker_croustibatch_1:latest
+    build:
+      context: ./raw/
+    #image: nicolasmir/docker_croustibatch_1:latest
     ports:
     - "2222:2222"
     environment:
@@ -11,7 +11,7 @@ services:
       INSIGHT_PORT: 8090
       CROUSTIBATCH_NAME: CROUSTIBATCH
     # --endpoint = ip de insight
-    command:  bash -c 'python3.6 /app/crawler.py --source ${SOURCE} --i ${INPUT} --config ${CONFIG} --runtime_data ${RUNTIME} --endpoint ${ENDPOINT}'
+    command:  bash -c 'python3.6 /app/crawler.py --source ${SOURCE} --i ${INPUT} --config ${CONFIG} --runtime_data ${RUNTIME} --endpoint ${ENDPOINT} -v -t'
     #command: ["tail", "-f", "/dev/null"]
     networks:
     - insight

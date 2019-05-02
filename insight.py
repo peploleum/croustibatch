@@ -152,7 +152,7 @@ def extract_data(crawlDir, file, ftp, targetDirectory, required, endpoint, login
     #    data = json.load(f)
     d = BytesIO()
     ftp.retrbinary('RETR '+file, d.write)
-    print ((d.getvalue().decode("utf-8")))
+    #print ((d.getvalue().decode("utf-8")))
     data = json.loads(d.getvalue().decode("utf-8"))
     #targetImageFileName = crawlDir + "/processedData/" + file.name
     targetImageFileName = crawlDir + "/processedData/" + file
@@ -274,6 +274,7 @@ def get_text(image, preprocess):
 
         ### End TESSERACT ###
         return text
-    except:
+    except Exception as e:
+        logging.error("ERROR : ", e)
         logging.debug("File corrupted")
         return "File corrupted"
