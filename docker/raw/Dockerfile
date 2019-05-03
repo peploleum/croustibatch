@@ -9,6 +9,19 @@ RUN apt-get update && \
 
 COPY sshd_config /etc/ssh/sshd_config
 COPY requirements.txt ./
+
+RUN apt-get update && apt-get install -y git
+RUN apt-get update && apt-get install -y vim
+RUN apt-get update && apt-get install -y software-properties-common
+RUN add-apt-repository ppa:jonathonf/python-3.6
+RUN apt-get update && apt-get install -y python3.6
+RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y unzip
+RUN apt-get update && apt-get install -y openalpr openalpr-utils libopenalpr-dev
+RUN apt-get update && apt-get install -y tesseract-ocr
+RUN apt-get update && apt-get install -y python-imaging
+RUN apt-get update && apt-get install -y libjpeg62 libjpeg62-dev
+
 RUN mkdir /app
 RUN mkdir /app/source
 RUN mkdir /app/download
@@ -23,18 +36,6 @@ RUN mkdir /app/conf
 COPY dockerdist/conf /app/conf
 COPY openalpr-2.3.0.zip app/
 
-RUN apt-get update && apt-get install -y git
-RUN apt-get update && apt-get install -y vim
-RUN apt-get update && apt-get install -y software-properties-common
-RUN add-apt-repository ppa:jonathonf/python-3.6
-RUN apt-get update && apt-get install -y python3.6
-RUN apt-get update && apt-get install -y curl
-RUN apt-get update && apt-get install -y unzip
-RUN apt-get update && apt-get install -y openalpr openalpr-utils libopenalpr-dev
-RUN apt-get update && apt-get install -y tesseract-ocr
-RUN apt-get update && apt-get install -y python-imaging
-RUN apt-get update && apt-get install -y libjpeg62 libjpeg62-dev
-
 RUN ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/libz.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so /usr/lib/libjpeg.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libfreetype.so /usr/lib/libfreetype.so
@@ -42,10 +43,6 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libfreetype.so /usr/lib/libfreetype.so
 RUN curl https://bootstrap.pypa.io/get-pip.py | python3.6
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install Pillow
-RUN pip install opencv-python
-RUN pip install pytesseract
-RUN pip install image
 
 
 RUN  apt-get -y autoclean && apt-get -y autoremove && \

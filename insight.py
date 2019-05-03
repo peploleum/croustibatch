@@ -5,19 +5,19 @@ import os.path
 
 import base64
 import logging
-# -*- coding: UTF-8 -*-
 
 from PIL import Image
 import pytesseract
 
 import cv2
 import os
-
 import os.path
 
 import requests
-# pip install requests
 from io import BytesIO
+
+from py_translator import Translator
+
 
 import time
 import insight
@@ -262,10 +262,18 @@ def get_text(image, preprocess):
 
         # load the image as a PIL/Pillow image, apply OCR, and then delete
         # the temporary file
-        pytesseract.pytesseract.tesseract_cmd = r'.\Tesseract-OCR\tesseract.exe'
+        if os.name == 'nt': #if on windows
+            pytesseract.pytesseract.tesseract_cmd = r'.\Tesseract-OCR\tesseract.exe'
         text = pytesseract.image_to_string(Image.open(filename))
         os.remove(filename)
         logging.debug(text)
+
+        s = Translator().translate(text=text, dest='fr').text
+        src = Translator().translate(text=text, dest='fr').src
+        logging.debug("Traduction du français : " + s)
+
+        if text:
+            text = text + "\nTraduction du "+src+" vers le fr : " + s
 
         # show the output images
         #cv2.imshow("Image", image)

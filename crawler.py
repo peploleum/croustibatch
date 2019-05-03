@@ -1,11 +1,11 @@
 # -*- coding: UTF-8 -*-
 
 import logging
-# pip install requests
 from openalpr import Alpr
 import time
 import insight
 from ftplib import FTP
+
 import re
 import os
 
@@ -129,7 +129,6 @@ try:
 
     while True:
         if not isSourceDirectoryEmpty(crawlDir):
-            #jsonFiles = pathlib.Path(crawlDir).glob(type)
             filelist = []
             ftp.retrlines('LIST',filelist.append)
             filelistsplitted = [i.split()[-1] for i in filelist]
@@ -137,22 +136,34 @@ try:
             jsonFiles = list(filter(r.match, filelistsplitted))
             if options.dataSource == "json":
                 for file in jsonFiles:
-                    #logging.debug(file.name)
                     logging.debug(file)
-                    #if not str(file).startswith('.'):
-                    insight.extract_data(crawlDir, file, ftp,  targetDirectory, algo, options.endpoint, options.login, options.password)
-                    #else:
-                    #    logging.debug("file temp : "+ file.name)
+                    if not str(file).startswith('.'):
+                        insight.extract_data(crawlDir, file, ftp,  targetDirectory, algo, options.endpoint, options.login, options.password)
+                    else:
+                        logging.debug("file temp : "+ str(file))
 
             elif options.dataSource == "image":
                 for file in jsonFiles:
-                    logging.debug(file.name)
-                    strFileName = sourceDirectory + "/" + file.name
-                    targetImageFileName = crawlDir + "/processedData/" + file.name
-                    if not str(file).startswith('.'):
-                        insight.postimg(strFileName, file.name.rsplit('.', 1)[0], insight.get_plates(algo, strFileName), options.endpoint, options.login, options.password)
-                        if not os.path.isfile(targetImageFileName):
-                            os.rename(str(file), targetImageFileName)
+                    logging.debug(file)
+                    strFileName = targetDirectory + "/" + file
+                    imageFile = open(strFileName, 'wb')
+                    ftp.retrbinary('RETR '+str(file), imageFile.write, 1024)
+                    targetImageFileName = crawlDir + "/processedData/" + file
+                    test =  str(file).rsplit('.', 1)[0]
+
+                    if not isinstance(algo, str):
+                        if not str(file).startswith('.'):
+                            if insight.postimg(strFileName, str(file).rsplit('.', 1)[0], insight.get_plates(algo, strFileName), options.endpoint, options.login, options.password):
+                                os.remove(strFileName)
+                    else:
+                        if not str(file).startswith('.'):
+                            if insight.postimg(strFileName, str(file).rsplit('.', 1)[0], insight.get_text(strFileName, algo), options.endpoint, options.login, options.password):
+                                os.remove(strFileName)
+
+                    if not insight.file_exists(targetImageFileName, ftp):
+                        ftp.rename(file, targetImageFileName)
+                    else:
+                        ftp.delete(file)
             else:
                 logging.error("Wrong --typesource arg")
         else:
